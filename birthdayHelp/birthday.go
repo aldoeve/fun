@@ -11,6 +11,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -23,14 +24,16 @@ func firstTime(fileName *string) {
 }
 
 func main() {
-	fileName := "Birthdays.txt"
 	operatingSystem := runtime.GOOS
-	if operatingSystem != "Linux" {
-		panic("Not yet made for any other operating system.Sorry.")
+	if operatingSystem == "linux" {
+		typeOfos := fmt.Errorf("Non-Linux type operating systems are not supported")
+		fmt.Println(typeOfos)
+		return
 	}
-	_, err := os.OpenFile(fileName, os.O_APPEND|os.O_RDWR, 0644)
-	if err != nil {
-		firstTime(&fileName)
-	}
+	//fileName := "Birthdays.txt"
+	//_, err := os.OpenFile(fileName, os.O_APPEND|os.O_RDWR, 0644)
+	//if err != nil {
+	//	firstTime(&fileName)
+	//}
 
 }
