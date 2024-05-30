@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -60,35 +61,49 @@ func displayUpcoming(file *os.File) error {
 	return nil
 }
 
+//Creates the new birthdates.
 func createReminders(file *os.File) error {
+	fmt.Println()
 	fmt.Println("Now in birthday reminder creater mode.")
-	fmt.Println("type \".quit\" to stop creating reminders")
-	var buffer string
+	fmt.Println("Type \".quit\" to stop creating reminders.")
+	fmt.Printf("You can open up the file \"%s\" and delete the undesired birthday.\n\n", FileName)
 	var name string
 	var day, month string
 	var feild int = 0
+	var intDay, intMonth int
+	var err error
 
 	fmt.Println("Type in the person's name:")
-	for fmt.Scanln(&buffer); buffer != ".quit"; feild %= 3 {
+	for buffer := bufio.NewScanner(os.Stdin); buffer.Scan() && buffer.Text() != ".quit"; feild %= 3 {
 		switch feild {
 		case 0:
-			name = buffer
+			name = buffer.Text()
 			feild++
 			fmt.Println("Type in the day:")
 		case 1:
-			day = buffer
+			day = buffer.Text()
 			feild++
 			fmt.Println("Type in the month:")
 		case 2:
-			month = buffer
+			month = buffer.Text()
 			feild++
-			file.WriteString(name + "|" + "time")
+			intDay, err = strconv.Atoi(day)
+			if err != nil {
+				return fmt.Errorf("could not change the day to an int")
+			}
+			intMonth, err = strconv.Atoi(month)
+			if err != nil {
+				return fmt.Errorf("could not change the month to an int")
+			}
+			_, err = file.WriteString(name + "|" + time.Date(0, time.Month(intMonth), intDay, 0, 0, 0, 0, time.Local).String() + "\n")
+			if err != nil {
+				return fmt.Errorf("failed to write to file")
+			}
 			fmt.Println("Saved.")
 			fmt.Println("Type in the person's name:")
 		default:
 			return fmt.Errorf("failed to parse data")
 		}
-
 	}
 
 	return nil
