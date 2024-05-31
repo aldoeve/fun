@@ -8,6 +8,9 @@
 //   on start up will remind you of any comming up.                //
 //-----------------------------------------------------------------//
 
+//Might return to this sometime since I do not like how unclean it is.
+//I need to learn more golang idomatic ways to do things.
+
 package main
 
 import (
@@ -17,6 +20,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -46,11 +50,35 @@ func welcome() {
 	time.Sleep(3 * time.Second)
 }
 
+//Prints birthdays occuring within 2 weeks
 func displayUpcoming(file *os.File) error {
 	scanner := bufio.NewScanner(file)
+	const twoWeeks float64 = 336
+	var buffer []string
+	var now time.Time
+	var dateWithCurrentYear time.Time
+	var timeLeft time.Duration
+	someDatesPrinted := false
+
+	fmt.Println("UPCOMING:")
 
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+		buffer = strings.Split(scanner.Text(), " ")
+		da, err := time.Parse(time.RFC3339, buffer[2])
+		if err != nil {
+			return fmt.Errorf("malformed date; possible corruption")
+		}
+		//This section deals with creating a new time.Time that just has an updated
+		//year; it is done so that figuring out the leap year edge cases are left to
+		//the libary.
+		now = time.Now()
+		dateWithCurrentYear = time.Date(now.Year(), da.Month(), da.Day(), 0, 0, 0, 0, da.Location())
+		timeLeft = dateWithCurrentYear.Sub(now)
+		if timeLeft.Hours() < twoWeeks {
+			someDatesPrinted = true
+			fmt.Printf("%s's birthday in %f hours;", buffer[0], timeLeft.Hours())
+			fmt.Printf(" the date is %d/%d (day/month).\n", dateWithCurrentYear.Day(), dateWithCurrentYear.Month())
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -58,14 +86,18 @@ func displayUpcoming(file *os.File) error {
 		return fmt.Errorf("failed to read line from file to display birthdays")
 	}
 
+	if !someDatesPrinted {
+		fmt.Println("No birthdays comming up!")
+	}
+
 	return nil
 }
 
-//Creates the new birthdates.
+//Creates the new birthdates and write them out to the given file.
 func createReminders(file *os.File) error {
 	fmt.Println()
 	fmt.Println("Now in birthday reminder creater mode.")
-	fmt.Println("Type \".quit\" to stop creating reminders.")
+	fmt.Println("Type \".quit\" or \".q\" to stop creating reminders.")
 	fmt.Printf("You can open up the file \"%s\" and delete the undesired birthday.\n\n", FileName)
 	var name string
 	var day, month string
@@ -74,7 +106,7 @@ func createReminders(file *os.File) error {
 	var err error
 
 	fmt.Println("Type in the person's name:")
-	for buffer := bufio.NewScanner(os.Stdin); buffer.Scan() && buffer.Text() != ".quit"; feild %= 3 {
+	for buffer := bufio.NewScanner(os.Stdin); buffer.Scan() && (buffer.Text() != ".q" && buffer.Text() != ".quit"); feild %= 3 {
 		switch feild {
 		case 0:
 			name = buffer.Text()
@@ -95,7 +127,7 @@ func createReminders(file *os.File) error {
 			if err != nil {
 				return fmt.Errorf("could not change the month to an int")
 			}
-			_, err = file.WriteString(name + "|" + time.Date(0, time.Month(intMonth), intDay, 0, 0, 0, 0, time.Local).String() + "\n")
+			_, err = file.WriteString(name + " | " + time.Date(2024, time.Month(intMonth), intDay, 0, 0, 0, 0, time.Local).Format(time.RFC3339) + "\n")
 			if err != nil {
 				return fmt.Errorf("failed to write to file")
 			}
