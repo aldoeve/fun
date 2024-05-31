@@ -6,8 +6,8 @@ enter:
 run:
 	python3 translator.py
 
-enviormentSetup:
-	pip install -r requirements.txt
+enviromentReqs:
+	pip3 install -r requirements.txt
 
 setup:
 	pip install virtualenv
