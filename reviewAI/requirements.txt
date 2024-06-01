@@ -3,3 +3,8 @@ torch >= 2.3.0+cpu
 torchvision >= 0.18.0+cpu  
 torchaudio >= 2.3.0+cpu
 numpy >= 1.26.3
+matplotlib >= 3.9.0
+gymnasium[classic_control]
+ipython
+PyQt6
+pyglet

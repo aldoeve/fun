@@ -4,7 +4,7 @@ enter:
 	@echo "source .venv/bin/activate"
 
 run:
-	python3 translator.py
+	python3 productQuality.py
 
 setup:
 	pip install virtualenv
