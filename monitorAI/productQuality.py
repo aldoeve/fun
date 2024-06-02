@@ -1,3 +1,5 @@
+#using this as refernce for my main ai
+
 import gymnasium as gym
 import math
 import random

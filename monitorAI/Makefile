@@ -4,7 +4,7 @@ enter:
 	@echo "source .venv/bin/activate"
 
 run:
-	python3 productQuality.py
+	python3 simpleMonitor.py
 
 setup:
 	pip install virtualenv
