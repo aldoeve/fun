@@ -20,6 +20,6 @@ void TextEditor::start()
             std::cout << std::format("{}\r\n", c);
         else
             std::cout << std::format("{} ('{}')\r\n", static_cast<int>(c), c);
-        if(c == 'q') break;
+        if(c == static_cast<char>(KEY_COMBO::CTRL_Q)) break;
     }
 }

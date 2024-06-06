@@ -6,13 +6,7 @@
 #include <iostream>
 #include <format>
 
-enum class DEFINES{
-    ERROR = -1,
-    MY_VMIN = 0,
-    MY_VTIME = 1,
-    NUM_BYTES = 1,
-    DONE = 0,
-};
+#include "myDefines.hpp"
 
 //Yet another simple terminal text editor.
 class TextEditor {
