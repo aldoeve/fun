@@ -1,20 +1,25 @@
-#include "editor.hpp"
 #include <ctype.h>
-#include <iostream>
-#include <format>
 
-void TextEditor::start() noexcept 
+#include "editor.hpp"
+
+void TextEditor::start()
 {
+    int readErr{0};
+    if(fatal) throw std::runtime_error{"tcgetattr() failed."};
     enableRawMode();
+    if(fatal) throw std::runtime_error{"tcsetattr() failed."};
 
-    for(;;){
+    for(;!fatal;){
         c = '\0';
-        if(read(STDIN_FILENO, &c, 1) == 0) break;
+        readErr = static_cast<int>(read(STDIN_FILENO, &c, static_cast<int>(DEFINES::NUM_BYTES)));    
+        if(readErr == static_cast<int>(DEFINES::DONE)) break;
+        else if(readErr == static_cast<int>(DEFINES::ERROR)){
+            throw std::runtime_error{"Failed to properly read from STDIN\r\n"};
+        }
         if(iscntrl(c))
             std::cout << std::format("{}\r\n", c);
         else
             std::cout << std::format("{} ('{}')\r\n", static_cast<int>(c), c);
         if(c == 'q') break;
     }
-    return;
 }
