@@ -5,10 +5,12 @@
 void TextEditor::start()
 {
     int readErr{0};
+    //Change the terminal flags
     if(fatal) throw std::runtime_error{"tcgetattr() failed."};
     enableRawMode();
     if(fatal) throw std::runtime_error{"tcsetattr() failed."};
 
+    //Core loop for the editor.
     for(;!fatal;){
         c = '\0';
         readErr = static_cast<int>(read(STDIN_FILENO, &c, static_cast<int>(DEFINES::NUM_BYTES)));    
