@@ -2,6 +2,21 @@
 
 #include "editor.hpp"
 
+void TextEditor::start() {
+    // Change the terminal flags
+    if (fatal) throw std::runtime_error{"tcgetattr() failed."};
+    enableRawMode();
+    if (fatal) throw std::runtime_error{"tcsetattr() failed."};
+    // Core loop for the editor.
+    int drawError {0};
+    for (;;) {
+        drawError = clearScreen();
+        drawError = min(drawError, drawLines());
+        if (drawError == static_cast<int>(DEFINES::ERROR)) throw std::runtime_error{"Failed drawing to screen."};
+        if (!processKeypress()) break;
+    }
+}
+
 void TextEditor::enableRawMode() noexcept {
     termios changes{originalTerminalState};
     changes.c_iflag &= ~(IXON | ICRNL);

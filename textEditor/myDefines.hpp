@@ -5,6 +5,7 @@ enum class DEFINES{
     NUM_BYTES = 1,
     DONE = 0,
     CLEAR_SCREEN_BYTES = 4,
+    REPOSITION_BYTES   = 3,
 };
 
 enum class KEY_COMBO{
