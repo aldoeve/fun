@@ -2,26 +2,36 @@
 
 #include "editor.hpp"
 
-void TextEditor::start()
-{
-    int readErr{0};
-    //Change the terminal flags
-    if(fatal) throw std::runtime_error{"tcgetattr() failed."};
-    enableRawMode();
-    if(fatal) throw std::runtime_error{"tcsetattr() failed."};
+void TextEditor::enableRawMode() noexcept {
+    termios changes{originalTerminalState};
+    changes.c_iflag &= ~(IXON | ICRNL);
+    changes.c_oflag &= ~(OPOST);
+    changes.c_lflag &= ~(ECHO | ICANON | IEXTEN);
+    changes.c_cc[VMIN] = static_cast<int>(DEFINES::MY_VMIN);
+    changes.c_cc[VTIME] = static_cast<int>(DEFINES::MY_VTIME);
+    fatal = tcsetattr(STDIN_FILENO, TCSAFLUSH, &changes) ==
+            static_cast<int>(DEFINES::ERROR) ? true : false;
+}
 
-    //Core loop for the editor.
-    for(;!fatal;){
-        c = '\0';
-        readErr = static_cast<int>(read(STDIN_FILENO, &c, static_cast<int>(DEFINES::NUM_BYTES)));    
-        if(readErr == static_cast<int>(DEFINES::DONE)) break;
-        else if(readErr == static_cast<int>(DEFINES::ERROR)){
-            throw std::runtime_error{"Failed to properly read from STDIN\r\n"};
-        }
-        if(iscntrl(c))
-            std::cout << std::format("{}\r\n", c);
-        else
-            std::cout << std::format("{} ('{}')\r\n", static_cast<int>(c), c);
-        if(c == static_cast<char>(KEY_COMBO::CTRL_Q)) break;
+void TextEditor::ReadKey() {
+    int nRead{0};
+    //Reads a singular keypress.
+    while ((nRead = static_cast<int>(read(STDIN_FILENO, &c, static_cast<int>(DEFINES::NUM_BYTES)))) 
+            != static_cast<int>(DEFINES::NUM_BYTES)){
+        if (nRead == static_cast<int>(DEFINES::ERROR) && errno != EAGAIN) 
+            throw std::runtime_error("Failed to read from input.");
+    }
+    return;
+}
+
+bool TextEditor::processKeypress() {
+    ReadKey();
+
+    switch (c)
+    {
+        case static_cast<int>(KEY_COMBO::CTRL_Q):
+            return false;
+        default:
+            return true;
     }
 }

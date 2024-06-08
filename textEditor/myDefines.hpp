@@ -4,6 +4,7 @@ enum class DEFINES{
     MY_VTIME = 60,
     NUM_BYTES = 1,
     DONE = 0,
+    CLEAR_SCREEN_BYTES = 4,
 };
 
 enum class KEY_COMBO{
