@@ -50,3 +50,26 @@ bool TextEditor::processKeypress() {
             return true;
     }
 }
+
+int TextEditor::drawLines() const noexcept {
+    int error {0};
+    for(int i {0}; i < rows; ++i){
+        error = static_cast<int>(write(STDOUT_FILENO, "~", static_cast<int>(DEFINES::NUM_BYTES)));
+        if(i < rows - 1) 
+            error = static_cast<int>(write(STDOUT_FILENO, "\r\n", static_cast<int>(DEFINES::NUM_BYTES) + 1));
+    }
+    error = min(error, static_cast<int>(write(STDOUT_FILENO, "\x1b[H", static_cast<int>(DEFINES::REPOSITION_BYTES))));
+    return error;
+}
+
+DEFINES TextEditor::getWindowSize() noexcept {
+    winsize ws {};
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == static_cast<int>(DEFINES::ERROR)
+        || ws.ws_col < 1) 
+        return DEFINES::ERROR;
+    else{
+        cols = ws.ws_col;
+        rows = ws.ws_row;
+    }
+    return DEFINES::DONE;
+}

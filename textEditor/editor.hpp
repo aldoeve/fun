@@ -5,6 +5,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <utility>
+#include <sys/ioctl.h>
 
 #include "myDefines.hpp"
 
@@ -14,7 +15,9 @@ public:
     // Creates the text editor object. Note that start() must be run to start the
     // editor.
     TextEditor() noexcept
-        : c{'a'}, fatal{false}, originalTerminalState{currentTerminalState()} {;} 
+        : c{'a'}, fatal{false},rows{0}, cols{0}, originalTerminalState{currentTerminalState()} {
+            fatal = getWindowSize() == DEFINES::ERROR ? true : false;
+        } 
 
     ~TextEditor() noexcept {
         if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminalState) == static_cast<int>(DEFINES::ERROR) 
@@ -29,7 +32,9 @@ public:
 
 private:
     char c;     // Data is read and stored here.
-    bool fatal; // Used to check if any errors have been encountered that are fatal
+    bool fatal; // Used to check if any errors have been encountered that are fatal.
+    int  rows;  // The number of rows of the terminal.
+    int  cols;  // The number of cols of the terminal.
     const termios originalTerminalState; // original state of the terminal before
                                          // the editor did anything.
 
@@ -65,13 +70,10 @@ private:
     }
 
     //Draws ~ on the left side like vim.
-    int drawLines() const noexcept {
-        int error {0};
-        for(int i {0}; i < 24; ++i)
-            error = static_cast<int>(write(STDOUT_FILENO, "~\r\n", static_cast<int>(DEFINES::REPOSITION_BYTES)));
-        error = min(error, static_cast<int>(write(STDOUT_FILENO, "\x1b[H", static_cast<int>(DEFINES::REPOSITION_BYTES))));
-        return error;
-    }
+    int drawLines() const noexcept;
+
+    //Retrives the size of the terminal and returns DEFINES::ERROR on failure.
+    DEFINES getWindowSize() noexcept;
 };
 
 #endif

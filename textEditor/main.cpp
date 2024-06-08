@@ -1,21 +1,31 @@
 #include <format>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "editor.hpp"
+
+void sanityCheck(int wait) noexcept {
+    std::cout << std::format("Sanity checks [.]") << std::flush;
+    sleep(wait);
+    std::cout << std::format("\b\b") << std::flush;
+    #ifdef __linux__
+    std::cout << std::format("✓") << std::flush;
+    #else
+    std::cout << std::format("x") << std::flush;
+    #endif
+    return;
+}
 
 int main() 
 {
     std::cout << std::format("[ctrl] + [c] still works to exit by force.") << std::endl;
     std::cout << std::format("[ctrl] + [q] to cleanly quit the program.") << std::endl;
     
-    std::cout << std::format("Sanity checks [......]") << std::flush;
-    sleep(2);
-    std::cout << std::format("\b\b\b\b\b\b\b") << std::flush;
-    for (unsigned int i{0}; i < 6; ++i){
-        std::cout << std::format("✓") << std::flush;
-        sleep(1);
-    }
+    std::thread checks {sanityCheck, 1};
+    
+    sleep(5);
+    checks.join();
 
     TextEditor editor{};
     try{
