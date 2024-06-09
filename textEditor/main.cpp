@@ -5,6 +5,9 @@
 
 #include "editor.hpp"
 
+TerminalTOStr interpret{};
+
+//Thinking of changing this to a more complex object that yeilds itself to inheritance.
 void sanityCheck(int wait) noexcept {
     std::cout << std::format("Sanity checks [.]") << std::flush;
     sleep(wait);

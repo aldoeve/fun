@@ -2,17 +2,24 @@
 
 #include "editor.hpp"
 
+TextEditor::~TextEditor() noexcept {
+    buffer.clear();
+    clearScreen(false);
+    buffer += interpret.str(TERMINAL::SHOW_CURSOR);
+    if(write(STDOUT_FILENO, buffer.c_str(), buffer.size()) == static_cast<int>(DEFINES::ERROR))
+        std::cerr << std::format("Failed to clear screen.{}", interpret.str(TERMINAL::NEW_LINE));
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminalState) == static_cast<int>(DEFINES::ERROR) || fatal)
+        std::cerr << std::format("Failed to restore terminal defaults. Run [reset].{}", interpret.str(TERMINAL::NEW_LINE));
+}
+
 void TextEditor::start() {
     // Change the terminal flags
     if (fatal) throw std::runtime_error{"tcgetattr() failed."};
     enableRawMode();
     if (fatal) throw std::runtime_error{"tcsetattr() failed."};
     // Core loop for the editor.
-    int drawError {0};
     for (;;) {
-        drawError = clearScreen();
-        drawError = min(drawError, drawLines());
-        if (drawError == static_cast<int>(DEFINES::ERROR)) throw std::runtime_error{"Failed drawing to screen."};
+        if (refreshScreen() == static_cast<int>(DEFINES::ERROR)) throw std::runtime_error{"Failed drawing to screen."};
         if (!processKeypress()) break;
     }
 }
@@ -51,15 +58,16 @@ bool TextEditor::processKeypress() {
     }
 }
 
-int TextEditor::drawLines() const noexcept {
-    int error {0};
+void TextEditor::drawLines() noexcept {
     for(int i {0}; i < rows; ++i){
-        error = static_cast<int>(write(STDOUT_FILENO, "~", static_cast<int>(DEFINES::NUM_BYTES)));
+        buffer += "~";
+        buffer += interpret.str(TERMINAL::CLEAR_ROW);
         if(i < rows - 1) 
-            error = static_cast<int>(write(STDOUT_FILENO, "\r\n", static_cast<int>(DEFINES::NUM_BYTES) + 1));
+            buffer += interpret.str(TERMINAL::NEW_LINE);
     }
-    error = min(error, static_cast<int>(write(STDOUT_FILENO, "\x1b[H", static_cast<int>(DEFINES::REPOSITION_BYTES))));
-    return error;
+    buffer += interpret.str(TERMINAL::REPOSITION_CUROSR);
+    buffer += interpret.str(TERMINAL::SHOW_CURSOR);
+    return;
 }
 
 DEFINES TextEditor::getWindowSize() noexcept {

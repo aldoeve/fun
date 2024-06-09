@@ -8,6 +8,7 @@
 #include <sys/ioctl.h>
 
 #include "myDefines.hpp"
+extern TerminalTOStr interpret;
 
 // Yet another simple terminal text editor.
 class TextEditor {
@@ -15,17 +16,11 @@ public:
     // Creates the text editor object. Note that start() must be run to start the
     // editor.
     TextEditor() noexcept
-        : c{'a'}, fatal{false},rows{0}, cols{0}, originalTerminalState{currentTerminalState()} {
+        : c{'a'}, fatal{false},rows{0}, cols{0}, buffer{}, originalTerminalState{currentTerminalState()} {
             fatal = getWindowSize() == DEFINES::ERROR ? true : false;
         } 
 
-    ~TextEditor() noexcept {
-        if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminalState) == static_cast<int>(DEFINES::ERROR) 
-          || fatal)
-            std::cerr << std::format("Failed to restore terminal defaults. Run [reset].\r\n");
-        if (clearScreen() == static_cast<int>(DEFINES::ERROR))
-            std::cerr << std::format("Failed to clean up screen.");
-    }
+    ~TextEditor() noexcept;
 
     // Starts the editor.
     void start();
@@ -35,6 +30,7 @@ private:
     bool fatal; // Used to check if any errors have been encountered that are fatal.
     int  rows;  // The number of rows of the terminal.
     int  cols;  // The number of cols of the terminal.
+    std::string buffer; //Buffer to avoid constantly using write().
     const termios originalTerminalState; // original state of the terminal before
                                          // the editor did anything.
 
@@ -60,17 +56,27 @@ private:
         return a ^ ((b ^ a) & -(b < a));
     }
 
+    //Clears screen and draws what it needs to.
+    int refreshScreen() noexcept {
+        int error {static_cast<int>(DEFINES::DONE)};
+        clearScreen();
+        drawLines();
+        error = static_cast<int>(write(STDOUT_FILENO, buffer.c_str(), buffer.size()));
+        buffer.clear();
+        return error;
+    }
+
     //Adhoc way to clear the screen.
-    int clearScreen() const noexcept {
-        //Clears screen.
-        int clear {static_cast<int>(write(STDOUT_FILENO, "\x1b[2J", static_cast<int>(DEFINES::CLEAR_SCREEN_BYTES)))};    
-        //Repositions cursor.
-        int reposition {static_cast<int>(write(STDOUT_FILENO, "\x1b[H", static_cast<int>(DEFINES::REPOSITION_BYTES)))};
-        return min(clear, reposition); 
+    void clearScreen(bool hideCursor=true) noexcept {
+        if(hideCursor)
+            buffer += interpret.str(TERMINAL::HIDE_CUROSR);
+        buffer += interpret.str(TERMINAL::CLEARS_WHOLE_SCREEN);
+        buffer += interpret.str(TERMINAL::REPOSITION_CUROSR);
+        return; 
     }
 
     //Draws ~ on the left side like vim.
-    int drawLines() const noexcept;
+    void drawLines() noexcept;
 
     //Retrives the size of the terminal and returns DEFINES::ERROR on failure.
     DEFINES getWindowSize() noexcept;
