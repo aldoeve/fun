@@ -1,4 +1,4 @@
-CPPFLAGS = -std=gnu++20 -Wall -Wextra -Werror -Wshadow -Wconversion -O3
+CPPFLAGS = -std=gnu++20 -Wall -Wextra -Werror -Wshadow -Wconversion -O0
 NAME_FOR_EDITOR = YATE
 
 all: textEditor

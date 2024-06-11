@@ -13,7 +13,7 @@ void sanityCheck(int wait) noexcept {
     sleep(wait);
     std::cout << std::format("\b\b") << std::flush;
     #ifdef __linux__
-    std::cout << std::format("✓") << std::flush;
+    std::cout << std::format("✓]") << std::flush;
     #else
     std::cout << std::format("x") << std::flush;
     #endif
@@ -22,12 +22,14 @@ void sanityCheck(int wait) noexcept {
 
 int main() 
 {
+    int test {-4};
+    std::cout << -(test >> 31) <<std::endl;
     std::cout << std::format("[ctrl] + [c] still works to exit by force.") << std::endl;
     std::cout << std::format("[ctrl] + [q] to cleanly quit the program.") << std::endl;
     
     std::thread checks {sanityCheck, 1};
     
-    sleep(5);
+    sleep(3);
     checks.join();
 
     TextEditor editor{};

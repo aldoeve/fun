@@ -30,7 +30,9 @@ private:
     bool fatal; // Used to check if any errors have been encountered that are fatal.
     int  rows;  // The number of rows of the terminal.
     int  cols;  // The number of cols of the terminal.
+    std::pair<int, int> coursorLocation {1 , 1}; //Location of the users coursor. (x, y). Same start index as terminal.
     std::string buffer; //Buffer to avoid constantly using write().
+    std::string_view welcomeMesssage {"YET ANOTHER TEXT EDITOR VER. 0.0.1"}; //Welcome message.
     const termios originalTerminalState; // original state of the terminal before
                                          // the editor did anything.
 
@@ -56,14 +58,62 @@ private:
         return a ^ ((b ^ a) & -(b < a));
     }
 
+    void boundCoursor() noexcept {
+        int& x = coursorLocation.first;
+        int& y = coursorLocation.second;
+        if (x == 0) x = 1;
+        else if (x > cols) x = cols;
+        if (y == 0) y = 1;
+        else if (y > rows) y = rows;
+        return;
+    }
+
+    void moveCoursor() noexcept {
+        switch (c)
+        {
+        case 'w':
+            coursorLocation.second -= 1;
+            break;
+        case 'a':
+            coursorLocation.first -= 1;
+            break;
+        case 's':
+            coursorLocation.second += 1;
+            break;
+        case 'd':
+            coursorLocation.first += 1;
+            break;
+        default:
+            break;
+        }
+        boundCoursor();
+    }
+
+    //Uses a given integer to add padding and center.
+    void center(const int a) noexcept {
+        int padding {(cols - a) / 2};
+        while (padding--) buffer += " ";
+    }
+
     //Clears screen and draws what it needs to.
     int refreshScreen() noexcept {
         int error {static_cast<int>(DEFINES::DONE)};
         clearScreen();
         drawLines();
+        fixCursor();
         error = static_cast<int>(write(STDOUT_FILENO, buffer.c_str(), buffer.size()));
         buffer.clear();
         return error;
+    }
+
+    //Repositions coursor to where it is suppose to be.
+    void fixCursor() noexcept {
+        buffer += interpret.str(TERMINAL::REPOSITION_Y);
+        buffer += std::to_string(coursorLocation.second);
+        buffer += interpret.str(TERMINAL::REPOSITION_AT);
+        buffer += std::to_string(coursorLocation.first);
+        buffer += interpret.str(TERMINAL::REPOSITION_X_END);
+        return;
     }
 
     //Adhoc way to clear the screen.
@@ -71,7 +121,7 @@ private:
         if(hideCursor)
             buffer += interpret.str(TERMINAL::HIDE_CUROSR);
         buffer += interpret.str(TERMINAL::CLEARS_WHOLE_SCREEN);
-        buffer += interpret.str(TERMINAL::REPOSITION_CUROSR);
+        buffer += interpret.str(TERMINAL::REPOSITION_CUROSR_AT_TOP);
         return; 
     }
 

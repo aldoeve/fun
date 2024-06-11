@@ -53,6 +53,12 @@ bool TextEditor::processKeypress() {
     {
         case static_cast<int>(KEY_COMBO::CTRL_Q):
             return false;
+        case 'w':
+        case 'a':
+        case 's':
+        case 'd':
+            moveCoursor();
+            return true;
         default:
             return true;
     }
@@ -60,12 +66,17 @@ bool TextEditor::processKeypress() {
 
 void TextEditor::drawLines() noexcept {
     for(int i {0}; i < rows; ++i){
-        buffer += "~";
+        if (i == rows/4) {
+            buffer += "~";
+            center(static_cast<int>(welcomeMesssage.size()));
+            buffer += welcomeMesssage;
+        }
+        else
+            buffer += "~";
         buffer += interpret.str(TERMINAL::CLEAR_ROW);
         if(i < rows - 1) 
             buffer += interpret.str(TERMINAL::NEW_LINE);
     }
-    buffer += interpret.str(TERMINAL::REPOSITION_CUROSR);
     buffer += interpret.str(TERMINAL::SHOW_CURSOR);
     return;
 }
